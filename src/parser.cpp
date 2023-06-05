@@ -369,6 +369,9 @@ Variant* VariantParser<DoCheck>::parse(Variant* v) {
     parse_attribute("enPassantTypesWhite", v->enPassantTypes[WHITE], v->pieceToChar);
     parse_attribute("enPassantTypesBlack", v->enPassantTypes[BLACK], v->pieceToChar);
     parse_attribute("castling", v->castling);
+    parse_attribute("infiniteCastling", v->infiniteCastling);
+    parse_attribute("castlingWithEnemy", v->castlingWithEnemy);
+    parse_attribute("canCaptureByCastling", v->canCaptureByCastling);
     parse_attribute("castlingDroppedPiece", v->castlingDroppedPiece);
     parse_attribute("castlingKingsideFile", v->castlingKingsideFile);
     parse_attribute("castlingQueensideFile", v->castlingQueensideFile);
@@ -515,6 +518,7 @@ Variant* VariantParser<DoCheck>::parse(Variant* v) {
         // Contradictory options
         if (!v->checking && v->checkCounting)
             std::cerr << "checkCounting=true requires checking=true." << std::endl;
+        // TODO change consistency checks for castling settings
         if (v->castling && v->castlingRank > v->maxRank)
             std::cerr << "Inconsistent settings: castlingRank > maxRank." << std::endl;
         if (v->castling && v->castlingQueensideFile > v->castlingKingsideFile)

@@ -28,3 +28,4 @@ pyffish.egg-info
 # IDEs
 .vscode
 .idea
+.ccls*

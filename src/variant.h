@@ -71,6 +71,9 @@ struct Variant {
   Bitboard enPassantRegion = AllSquares;
   PieceSet enPassantTypes[COLOR_NB] = {piece_set(PAWN), piece_set(PAWN)};
   bool castling = true;
+  bool infiniteCastling = false;
+  bool castlingWithEnemy = false;
+  bool canCaptureByCastling = false;
   bool castlingDroppedPiece = false;
   File castlingKingsideFile = FILE_G;
   File castlingQueensideFile = FILE_C;
