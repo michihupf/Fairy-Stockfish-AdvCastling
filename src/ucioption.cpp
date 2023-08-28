@@ -136,7 +136,7 @@ void on_variant_change(const Option &o) {
                     suffix += "pB";
             }
             // Castling
-            if (pt == KING && v->castling)
+            if (pt == KING && v->castlingLimit)
                  suffix += "O" + std::to_string((v->castlingKingsideFile - v->castlingQueensideFile) / 2);
             // Drop region
             if (v->pieceDrops)

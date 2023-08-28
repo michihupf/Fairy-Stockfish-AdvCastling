@@ -990,7 +990,7 @@ inline FenValidation validate_fen(const std::string& fen, const Variant* v, bool
 
     // 3) Part
     // check castling rights
-    if (fenParts.size() >= 3 && !skipCastlingAndEp && v->castling)
+    if (fenParts.size() >= 3 && !skipCastlingAndEp && v->castlingLimit)
     {
         std::array<std::string, 2> castlingInfoSplitted;
         if (fill_castling_info_splitted(fenParts[2], castlingInfoSplitted) == NOK)

@@ -62,7 +62,7 @@ namespace {
     Variant* nocastle_variant() {
         Variant* v = chess_variant()->init();
         v->startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1";
-        v->castling = false;
+        v->castlingLimit = 0;
         return v;
     }
     // Armageddon Chess
@@ -144,7 +144,7 @@ namespace {
     Variant* raazuvaa_variant() {
         Variant* v = chess_variant_base()->init();
         v->startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1";
-        v->castling = false;
+        v->castlingLimit = 0;
         v->doubleStep = false;
         return v;
     }
@@ -164,7 +164,7 @@ namespace {
         v->promotionPieceTypes[WHITE] = piece_set(MET);
         v->promotionPieceTypes[BLACK] = piece_set(MET);
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->nMoveRule = 0;
         v->countingRule = MAKRUK_COUNTING;
         return v;
@@ -209,7 +209,7 @@ namespace {
         v->promotionPieceTypes[WHITE] = piece_set(ROOK) | KNIGHT | KHON | MET;
         v->promotionPieceTypes[BLACK] = piece_set(ROOK) | KNIGHT | KHON | MET;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->countingRule = ASEAN_COUNTING;
         return v;
     }
@@ -240,7 +240,7 @@ namespace {
         v->promotionPieceTypes[WHITE] = piece_set(FERS);
         v->promotionPieceTypes[BLACK] = piece_set(FERS);
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->extinctionValue = -VALUE_MATE;
         v->extinctionClaim = true;
         v->extinctionPieceTypes = piece_set(ALL_PIECES);
@@ -340,7 +340,7 @@ namespace {
         v->flagRegion[WHITE] = Rank8BB;
         v->flagRegion[BLACK] = Rank8BB;
         v->flagMove = true;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->checking = false;
         return v;
     }
@@ -392,7 +392,7 @@ namespace {
     Variant* antichess_variant() {
         Variant* v = giveaway_variant()->init();
         v->startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1";
-        v->castling = false;
+        v->castlingLimit = 0;
         return v;
     }
     // Suicide chess
@@ -754,7 +754,7 @@ namespace {
         v->promotionRegion[WHITE] = Rank5BB;
         v->promotionRegion[BLACK] = Rank1BB;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->promotedPieceType[SHOGI_PAWN] = GOLD;
         v->promotedPieceType[SILVER]     = GOLD;
         v->promotedPieceType[BISHOP]     = DRAGON_HORSE;
@@ -904,7 +904,7 @@ namespace {
         v->promotionRegion[WHITE] = Rank6BB | Rank7BB;
         v->promotionRegion[BLACK] = Rank2BB | Rank1BB;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->promotedPieceType[SHOGI_PAWN]    = CUSTOM_PIECE_6; // swallow promotes to goose
         v->promotedPieceType[CUSTOM_PIECE_1] = CUSTOM_PIECE_7; // falcon promotes to eagle
         v->mandatoryPiecePromotion = true;
@@ -948,7 +948,7 @@ namespace {
         v->promotionPieceTypes[WHITE] = piece_set(QUEEN) | ROOK | KNIGHT;
         v->promotionPieceTypes[BLACK] = piece_set(QUEEN) | ROOK | KNIGHT;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         return v;
     }
     // Gardner's minichess
@@ -961,7 +961,7 @@ namespace {
         v->promotionRegion[WHITE] = Rank5BB;
         v->promotionRegion[BLACK] = Rank1BB;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         return v;
     }
     // Almost chess
@@ -1046,7 +1046,7 @@ namespace {
         v->promotionPieceTypes[WHITE] = piece_set(BERS);
         v->promotionPieceTypes[BLACK] = piece_set(BERS);
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->extinctionValue = VALUE_DRAW; // Robado
         v->extinctionPieceTypes = piece_set(ALL_PIECES);
         v->extinctionPieceCount = 1;
@@ -1075,7 +1075,7 @@ namespace {
         v->add_piece(CLOBBER_PIECE, 'p');
         v->startFen = "PpPpP/pPpPp/PpPpP/pPpPp/PpPpP/pPpPp w 0 1";
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->stalemateValue = -VALUE_MATE;
         v->immobilityIllegal = false;
         return v;
@@ -1089,7 +1089,7 @@ namespace {
         v->add_piece(BREAKTHROUGH_PIECE, 'p');
         v->startFen = "pppppppp/pppppppp/8/8/8/8/PPPPPPPP/PPPPPPPP w 0 1";
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->stalemateValue = -VALUE_MATE;
         v->flagPiece[WHITE] = v->flagPiece[BLACK] = BREAKTHROUGH_PIECE;
         v->flagRegion[WHITE] = Rank8BB;
@@ -1108,7 +1108,7 @@ namespace {
         v->startFen = "P5p/7/7/7/7/7/p5P w 0 1";
         v->pieceDrops = true;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->immobilityIllegal = false;
         v->stalemateValue = -VALUE_MATE;
         v->stalematePieceCount = true;
@@ -1132,7 +1132,7 @@ namespace {
         v->startFen = "8/8/8/8/8/8/8/8[PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPpppppppppppppppppppppppppppppppp] w 0 1";
         v->pieceDrops = true;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->immobilityIllegal = false;
         v->stalemateValue = -VALUE_MATE;
         v->stalematePieceCount = true;
@@ -1170,7 +1170,7 @@ namespace {
         v->mobilityRegion[BLACK][KING] = (Rank5BB | Rank6BB | Rank7BB) & (FileCBB | FileDBB | FileEBB);
         v->kingType = WAZIR;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->stalemateValue = -VALUE_MATE;
         //v->nFoldValue = VALUE_MATE;
         v->perpetualCheckIllegal = true;
@@ -1240,7 +1240,7 @@ namespace {
         v->pieceDrops = true;
         v->capturesToHand = true;
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->dropNoDoubled = SHOGI_PAWN;
         v->immobilityIllegal = true;
         v->shogiPawnDropMateIllegal = false;
@@ -1420,7 +1420,7 @@ namespace {
         v->add_piece(KNIGHT, 'n');
         v->startFen = "nnnnnnnnn/9/9/9/9/9/9/9/NNNNNNNNN w - - 0 1";
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->stalemateValue = -VALUE_MATE;
         v->flagPiece[WHITE] = v->flagPiece[BLACK] = KNIGHT;
         v->flagRegion[WHITE] = make_bitboard(SQ_E5);
@@ -1444,7 +1444,7 @@ namespace {
         v->promotionPieceTypes[WHITE] = piece_set(FERS);
         v->promotionPieceTypes[BLACK] = piece_set(FERS);
         v->doubleStep = false;
-        v->castling = false;
+        v->castlingLimit = 0;
         v->extinctionValue = -VALUE_MATE;
         v->extinctionClaim = true;
         v->extinctionPieceTypes = piece_set(ALL_PIECES);
@@ -1479,7 +1479,7 @@ namespace {
         v->immobilityIllegal = true;
         v->doubleStepRegion[WHITE] = Rank3BB;
         v->doubleStepRegion[BLACK] = Rank8BB;
-        v->castling = false;
+        v->castlingLimit = 0;
         return v;
     }
     // Opulent chess
@@ -1521,7 +1521,7 @@ namespace {
         v->promotionRegion[BLACK] = Rank1BB;
         v->doubleStepRegion[WHITE] = Rank3BB;
         v->doubleStepRegion[BLACK] = Rank8BB;
-        v->castling = false;
+        v->castlingLimit = 0;
         return v;
     }
     // Omicron chess
@@ -1557,7 +1557,7 @@ namespace {
         v->promotionRegion[BLACK] = make_bitboard(SQ_A5, SQ_B3, SQ_C2, SQ_D2, SQ_E1, SQ_F1, SQ_G2, SQ_H2, SQ_I3, SQ_J5);
         v->doubleStepRegion[WHITE] = Rank3BB;
         v->doubleStepRegion[BLACK] = Rank8BB;
-        v->castling = false;
+        v->castlingLimit = 0;
         return v;
     }
     // Wolf chess
@@ -1583,7 +1583,7 @@ namespace {
         v->doubleStepRegion[BLACK] = Rank9BB | make_bitboard(SQ_B8, SQ_C8, SQ_F8, SQ_G8);
         v->enPassantTypes[WHITE] = v->enPassantTypes[BLACK] = piece_set(PAWN);
         v->nMoveRuleTypes[WHITE] = v->nMoveRuleTypes[BLACK] = piece_set(PAWN) | piece_set(CUSTOM_PIECE_1);
-        v->castling = false;
+        v->castlingLimit = 0;
         return v;
     }
     // Shako

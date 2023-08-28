@@ -144,6 +144,9 @@ public:
   Bitboard double_step_region(Color c) const;
   Bitboard triple_step_region(Color c) const;
   bool castling_enabled() const;
+  int castling_limit() const;
+  bool castling_with_enemy_pieces() const;
+  bool can_capture_by_castling() const;
   bool castling_dropped_piece() const;
   File castling_kingside_file() const;
   File castling_queenside_file() const;
@@ -506,7 +509,22 @@ inline Bitboard Position::triple_step_region(Color c) const {
 
 inline bool Position::castling_enabled() const {
   assert(var != nullptr);
-  return var->castling;
+  return var->castlingLimit != 0;
+}
+
+inline int Position::castling_limit() const {
+  assert(var != nullptr);
+  return var->castlingLimit;
+}
+
+inline bool Position::castling_with_enemy_pieces() const {
+  assert(var != nullptr);
+  return var->castlingWithEnemy;
+}
+
+inline bool Position::can_capture_by_castling() const {
+  assert(var != nullptr);
+  return var->canCaptureByCastling;
 }
 
 inline bool Position::castling_dropped_piece() const {
