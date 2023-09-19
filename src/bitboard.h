@@ -20,6 +20,7 @@
 #define BITBOARD_H_INCLUDED
 
 #include <string>
+#include <iostream> // TODO REMOVE
 
 #include "types.h"
 
@@ -32,13 +33,6 @@ bool probe(Square wksq, Square wpsq, Square bksq, Color us);
 
 } // namespace Stockfish::Bitbases
 
-namespace Bitboards {
-
-void init_pieces();
-void init();
-std::string pretty(Bitboard b);
-
-} // namespace Stockfish::Bitboards
 
 #ifdef LARGEBOARDS
 constexpr Bitboard AllSquares = ((~Bitboard(0)) >> 8);
@@ -144,6 +138,7 @@ struct Magic {
   }
 };
 
+
 extern Magic RookMagicsH[SQUARE_NB];
 extern Magic RookMagicsV[SQUARE_NB];
 extern Magic BishopMagics[SQUARE_NB];
@@ -172,6 +167,29 @@ inline Bitboard square_bb(Square s) {
   assert(is_ok(s));
   return SquareBB[s];
 }
+
+/// distance() functions return the distance between x and y, defined as the
+/// number of steps for a king in x to reach y.
+
+template<typename T0 = Square> inline int distance(Square x, Square y);
+template<> inline int distance<File>(Square x, Square y) { return std::abs(file_of(x) - file_of(y)); }
+template<> inline int distance<Rank>(Square x, Square y) { return std::abs(rank_of(x) - rank_of(y)); }
+template<> inline int distance<Square>(Square x, Square y) { return SquareDistance[x][y]; }
+
+inline int edge_distance(File f, File maxFile = FILE_H) { return std::min(f, File(maxFile - f)); }
+inline int edge_distance(Rank r, Rank maxRank = RANK_7) { return std::min(r, Rank(maxRank - r)); }
+
+namespace Bitboards {
+
+void init_pieces();
+void init();
+inline Bitboard safe_destination(Square s, int step) {
+      Square to = Square(s + step);
+      return is_ok(to) && distance(s, to) <= 3 ? square_bb(to) : Bitboard(0);
+}
+std::string pretty(Bitboard b);
+
+} // namespace Stockfish::Bitboards
 
 
 /// Overloads of bitwise operators between a Bitboard and a Square for testing
@@ -268,7 +286,6 @@ constexpr Bitboard pawn_attacks_bb(Bitboard b) {
 }
 
 inline Bitboard pawn_attacks_bb(Color c, Square s) {
-
   assert(is_ok(s));
   return PseudoAttacks[c][PAWN][s];
 }
@@ -388,16 +405,6 @@ inline bool aligned(Square s1, Square s2, Square s3) {
 }
 
 
-/// distance() functions return the distance between x and y, defined as the
-/// number of steps for a king in x to reach y.
-
-template<typename T1 = Square> inline int distance(Square x, Square y);
-template<> inline int distance<File>(Square x, Square y) { return std::abs(file_of(x) - file_of(y)); }
-template<> inline int distance<Rank>(Square x, Square y) { return std::abs(rank_of(x) - rank_of(y)); }
-template<> inline int distance<Square>(Square x, Square y) { return SquareDistance[x][y]; }
-
-inline int edge_distance(File f, File maxFile = FILE_H) { return std::min(f, File(maxFile - f)); }
-inline int edge_distance(Rank r, Rank maxRank = RANK_8) { return std::min(r, Rank(maxRank - r)); }
 
 
 template<RiderType R>

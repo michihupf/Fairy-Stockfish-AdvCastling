@@ -76,7 +76,7 @@ struct Variant {
   int castlingLimit = 1; // -1 means unlimited, 0 disables castling
   bool castlingWithEnemy = false;
   bool canCaptureByCastling = false;
-  std::string castlingMove = "ssW"; // defines how a castling move can be made
+  std::string castlingMove = "nsD"; // defines how a castling move can be made
   bool castlingDroppedPiece = false;
   File castlingKingsideFile = FILE_G;
   File castlingQueensideFile = FILE_C;

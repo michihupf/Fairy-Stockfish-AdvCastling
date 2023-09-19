@@ -52,6 +52,7 @@ struct StateInfo {
   int    countingPly;
   int    countingLimit;
   CheckCount checksRemaining[COLOR_NB];
+  CastlingCount castlingRemaining[COLOR_NB];
   Bitboard epSquares;
   Square castlingKingSquare[COLOR_NB];
   Bitboard wallSquares;
@@ -147,6 +148,7 @@ public:
   Bitboard triple_step_region(Color c) const;
   bool castling_enabled() const;
   int castling_limit() const;
+  int castling_stepsize() const;
   bool castling_with_enemy_pieces() const;
   bool can_capture_by_castling() const;
   bool castling_dropped_piece() const;
@@ -347,7 +349,7 @@ private:
   // Other helpers
   void move_piece(Square from, Square to);
   template<bool Do>
-  void do_castling(Color us, Square from, Square& to, Square& rfrom, Square& rto);
+  void do_castling(Color us, Square from, Square& to, Square& rfrom, Square& rto, Piece& captured);
 
   // Data members
   Piece board[SQUARE_NB];
@@ -368,6 +370,7 @@ private:
   const Variant* var;
   bool tsumeMode;
   bool chess960;
+  int castlingStepsize;
   int pieceCountInHand[COLOR_NB][PIECE_TYPE_NB];
   int virtualPieces;
   Bitboard promotedPieces;
@@ -528,6 +531,11 @@ inline bool Position::castling_enabled() const {
 inline int Position::castling_limit() const {
   assert(var != nullptr);
   return var->castlingLimit;
+}
+
+inline int Position::castling_stepsize() const {
+    assert(castlingStepsize > 0);
+    return castlingStepsize;
 }
 
 inline bool Position::castling_with_enemy_pieces() const {

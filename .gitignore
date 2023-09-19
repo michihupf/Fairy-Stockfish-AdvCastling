@@ -2,6 +2,7 @@
 **/*.o
 **/*.s
 src/.depend
+compile_commands.json
 
 # Built binary
 src/stockfish*
@@ -29,3 +30,4 @@ pyffish.egg-info
 .vscode
 .idea
 .ccls*
+**/.cache/**

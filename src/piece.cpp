@@ -230,7 +230,7 @@ void PieceMap::init(const Variant* v) {
       add(pt, from_betza(v != nullptr ? v->customPiece[pt - CUSTOM_PIECES] : "", ""));
 
   // Add meta piece for castling, king will end up where the meta piece can move
-  add(NO_PIECE_TYPE, from_betza(v != nullptr ? v->castlingMove : "ssW", "meta_castling"));
+  add(META_CASTLING, from_betza(v != nullptr ? v->castlingMove : "nsD", "meta_castling"));
 }
 
 void PieceMap::add(PieceType pt, const PieceInfo* p) {

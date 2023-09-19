@@ -16,6 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <regex>
 #include <string>
 #include <sstream>
 
@@ -521,7 +522,6 @@ Variant* VariantParser<DoCheck>::parse(Variant* v) {
         // Contradictory options
         if (!v->checking && v->checkCounting)
             std::cerr << "checkCounting=true requires checking=true." << std::endl;
-        // TODO change consistency checks for castling settings
         if (v->castlingLimit && v->castlingRank > v->maxRank)
             std::cerr << "Inconsistent settings: castlingRank > maxRank." << std::endl;
         if (v->castlingLimit && v->castlingQueensideFile > v->castlingKingsideFile)
@@ -530,6 +530,10 @@ Variant* VariantParser<DoCheck>::parse(Variant* v) {
         // Check for limitations
         if (v->pieceDrops && (v->arrowGating || v->duckGating || v->staticGating || v->pastGating))
             std::cerr << "pieceDrops and arrowGating/duckGating are incompatible." << std::endl;
+
+        // Check for malformed castling options
+        if (!std::regex_match(v->castlingMove, std::basic_regex("^(?:n[bcfjlrsv]*[DA])+$|^(?:n[bcfjlrsv]*[HG])+$")))
+            std::cerr << "castlingMove malformed. Leaps or hippogonal moves are not allowed. All possible moves have to be of same length." << std::endl;
 
         // Options incompatible with royal kings
         if (v->pieceTypes & KING)

@@ -18,6 +18,7 @@
 
 #include <cassert>
 
+#include "bitboard.h"
 #include "movegen.h"
 #include "position.h"
 
@@ -34,10 +35,20 @@ namespace {
         Bitboard b = pos.board_bb() & ~((pos.pieces() ^ from) | to);
         if (T == CASTLING)
         {
-            Square kto = make_square(to > from ? pos.castling_kingside_file() : pos.castling_queenside_file(), pos.castling_rank(us));
-            Direction step = kto > from ? EAST : WEST;
-            Square rto = kto - step;
-            b ^= square_bb(to) ^ kto ^ rto;
+            // Square kto = make_square(to > from ? pos.castling_kingside_file() : pos.castling_queenside_file(), pos.castling_rank(us));
+            Direction step = static_cast<Direction>(((int)to - (int)from) / pos.castling_stepsize());
+            Square rsq = to;
+            while (Bitboards::safe_destination(rsq, step)) {
+                rsq += step;
+                if (pos.piece_on(rsq))
+                  break;
+            }
+            if (rsq != to) {
+              Square rto = to - step;
+              if (!rto) // check if the square is empty
+                b ^= square_bb(rsq) ^ to ^ rto;
+              to = rsq;
+            }
         }
         if (T == EN_PASSANT)
             b ^= pos.capture_square(to);
@@ -51,6 +62,19 @@ namespace {
         while (b)
             *moveList++ = make_gating<T>(from, to, pt, pop_lsb(b));
         return moveList;
+    }
+
+    if (T == CASTLING) {
+        Direction step = static_cast<Direction>(((int)to - (int)from) / 2);
+        Square rsq = to;
+        while (Bitboards::safe_destination(rsq, step)) {
+            rsq += step;
+            if (pos.piece_on(rsq))
+              break;
+        }
+        if (rsq != to) {
+          to = rsq;
+        }
     }
 
     *moveList++ = make<T>(from, to, pt);
@@ -400,12 +424,21 @@ namespace {
                 moveList = generate_drops<Us, Type>(pos, moveList, pop_lsb(ps), target & ~pos.pieces(~Us));
 
         // Castling with non-king piece
-        if (!pos.count<KING>(Us) && Type != CAPTURES && pos.can_castle(Us & ANY_CASTLING))
+        // TODO reimplement
+        if (!pos.count<KING>(Us) && Type != CAPTURES) //&& pos.can_castle(Us & ANY_CASTLING))
         {
-            Square from = pos.castling_king_square(Us);
-            for(CastlingRights cr : { Us & KING_SIDE, Us & QUEEN_SIDE } )
-                if (!pos.castling_impeded(cr) && pos.can_castle(cr))
-                    moveList = make_move_and_gating<CASTLING>(pos, moveList, Us, from, pos.castling_rook_square(cr));
+            // Square from = pos.castling_king_square(Us);
+            // for(CastlingRights cr : { Us & KING_SIDE, Us & QUEEN_SIDE } )
+            //     if (!pos.castling_impeded(cr) && pos.can_castle(cr))
+            //         moveList = make_move_and_gating<CASTLING>(pos, moveList, Us, from, pos.castling_rook_square(cr));
+            Bitboard initiators = pos.pieces(Us, pos.castling_king_piece(Us));
+            while (initiators) {
+                Square from = pop_lsb(initiators);
+                Bitboard possible_moves = pos.moves_from(Us, META_CASTLING, from);
+                while (possible_moves)
+                moveList = make_move_and_gating<CASTLING>(pos, moveList, Us, from, pop_lsb(possible_moves));
+            }
+                       
         }
 
         // Special moves
@@ -447,10 +480,15 @@ namespace {
         if (pos.pass())
             *moveList++ = make<SPECIAL>(ksq, ksq);
 
-        if ((Type == QUIETS || Type == NON_EVASIONS) && pos.can_castle(Us & ANY_CASTLING))
-            for (CastlingRights cr : { Us & KING_SIDE, Us & QUEEN_SIDE } )
-                if (!pos.castling_impeded(cr) && pos.can_castle(cr))
-                    moveList = make_move_and_gating<CASTLING>(pos, moveList, Us,ksq, pos.castling_rook_square(cr));
+        if ((Type == QUIETS || Type == NON_EVASIONS)) { //&& pos.can_castle(Us & ANY_CASTLING)) {
+            b = pos.moves_from(Us, META_CASTLING, ksq);
+            while (b) {
+              moveList = make_move_and_gating<CASTLING>(pos, moveList, Us, ksq, pop_lsb(b));
+            }
+            // for (CastlingRights cr : { Us & KING_SIDE, Us & QUEEN_SIDE } )
+            //     if (!pos.castling_impeded(cr) && pos.can_castle(cr))
+            //         moveList = make_move_and_gating<CASTLING>(pos, moveList, Us, ksq, pos.castling_rook_square(cr));
+        }
     }
 
     return moveList;

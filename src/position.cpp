@@ -29,6 +29,7 @@
 #include "position.h"
 #include "thread.h"
 #include "tt.h"
+#include "types.h"
 #include "uci.h"
 #include "syzygy/tbprobe.h"
 
@@ -516,6 +517,7 @@ Position& Position::set(const Variant* v, const string& fenStr, bool isChess960,
   chess960 = isChess960 || v->chess960;
   tsumeMode = Options["TsumeMode"];
   thisThread = th;
+  castlingStepsize = 2;
   set_state(st);
 
   assert(pos_is_ok());
@@ -1107,8 +1109,10 @@ bool Position::legal(Move m) const {
       {
           // After castling, the rook and king final positions are the same in
           // Chess960 as they would be in standard chess.
-          kto = make_square(to > from ? castling_kingside_file() : castling_queenside_file(), castling_rank(us));
-          Direction step = kto > from ? EAST : WEST;
+          // kto = make_square(to > from ? castling_kingside_file() : castling_queenside_file(), castling_rank(us));
+          // Direction step = kto > from ? EAST : WEST;
+          Direction step = static_cast<Direction>(((int)to - (int)from)/distance(to, from));
+          kto = from + castling_stepsize() * step;
           Square rto = kto - step;
           // Pseudo-royal king
           if (st->pseudoRoyals & from)
@@ -1116,6 +1120,9 @@ bool Position::legal(Move m) const {
                   if (  !(blast_on_capture() && (attacks_bb<KING>(s) & st->pseudoRoyals & pieces(~sideToMove)))
                       && attackers_to(s, occupied, ~us))
                       return false;
+          if (!(var->castlingRookPieces[us] & type_of(piece_on(to)))) {
+              return false;
+          }
           // Move the rook
           occupied ^= to | rto;
       }
@@ -1182,7 +1189,7 @@ bool Position::legal(Move m) const {
       (mutually_immune_types() & type_of(moved_piece(m))) &&
       (type_of(moved_piece(m)) == type_of(piece_on(to)))
   )
-  return false;
+      return false;
 
   // En passant captures are a tricky special case. Because they are rather
   // uncommon, we do it simply by testing whether the king is attacked after
@@ -1201,26 +1208,50 @@ bool Position::legal(Move m) const {
 
   // Castling moves generation does not check if the castling path is clear of
   // enemy attacks, it is delayed at a later time: now!
+  // TODO
   if (type_of(m) == CASTLING)
   {
       // After castling, the rook and king final positions are the same in
       // Chess960 as they would be in standard chess.
-      to = make_square(to > from ? castling_kingside_file() : castling_queenside_file(), castling_rank(us));
-      Direction step = to > from ? WEST : EAST;
+      // to = make_square(to > from ? castling_kingside_file() : castling_queenside_file(), castling_rank(us));
+      // Direction step = to > from ? WEST : EAST;
+      // the direction in which the king castles follows the formula (rfrom-kfrom)/dist(rfrom,kfrom)
+      Direction step = static_cast<Direction>(((int)to - (int)from)/distance(from, to));
+      to = from + 2 * step;
+
+      // Check if rook is an invalid castling rook piece 
+      if (!(castling_rook_pieces(us) & type_of(piece_on(to_sq(m)))))
+          return false;
 
       // Will the gate be blocked by king or rook?
-      Square rto = to + (to_sq(m) > from_sq(m) ? WEST : EAST);
+      // Square rto = to + (to_sq(m) > from_sq(m) ? WEST : EAST);
+      Square rto = to - step;
       if (is_gating(m) && (gating_square(m) == to || gating_square(m) == rto))
           return false;
+
+      // check if own piece is on the `to` square
+      if (can_capture_by_castling())
+          if (piece_on(to) && color_of(piece_on(to)) == us)
+              return false;
+          else void();
+      else
+          if (piece_on(to))
+              return false;
+
+      // check if piece blocks castling
+      for (Square s = from + step; s != to; s += step)
+          if (piece_on(s))
+              return false;
 
       // Non-royal pieces can not be impeded from castling
       if (type_of(piece_on(from)) != KING)
           return true;
 
-      for (Square s = to; s != from; s += step)
+      for (Square s = to; s != from; s -= step) {
           if (attackers_to(s, ~us)
               || (var->flyingGeneral && (attacks_bb(~us, ROOK, s, pieces() ^ from) & pieces(~us, KING))))
               return false;
+      }
 
       // In case of Chess960, verify if the Rook blocks some checks
       // For instance an enemy queen in SQ_A1 when castling rook is in SQ_B1.
@@ -1476,12 +1507,14 @@ bool Position::gives_check(Move m) const {
       // Castling is encoded as 'king captures the rook'
       Square kfrom = from;
       Square rfrom = to;
-      Square kto = make_square(rfrom > kfrom ? castling_kingside_file() : castling_queenside_file(), castling_rank(sideToMove));
-      Square rto = kto + (rfrom > kfrom ? WEST : EAST);
+      // Square kto = make_square(rfrom > kfrom ? castling_kingside_file() : castling_queenside_file(), castling_rank(sideToMove));
+      // Square rto = kto + (rfrom > kfrom ? WEST : EAST); TODO REMOVE
+      Direction step = static_cast<Direction>(((int)to - (int)from)/distance(to, from));
+      Square kto = from + castling_stepsize() * step;
+      Square rto = kto - step;
 
       // Is there a discovered check?
-      if (   castling_rank(WHITE) > RANK_1
-          && ((blockers_for_king(~sideToMove) & rfrom) || (non_sliding_riders() & pieces(sideToMove)))
+      if (((blockers_for_king(~sideToMove) & rfrom) || (non_sliding_riders() & pieces(sideToMove)))
           && attackers_to(square<KING>(~sideToMove), (pieces() ^ kfrom ^ rfrom) | rto | kto, sideToMove))
           return true;
 
@@ -1553,9 +1586,10 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   {
       assert(type_of(pc) != NO_PIECE_TYPE);
       assert(castling_rook_pieces(us) & type_of(captured));
+      assert(castling_king_piece(us) & type_of(moved_piece(m)));
 
       Square rfrom, rto;
-      do_castling<true>(us, from, to, rfrom, rto);
+      do_castling<true>(us, from, to, rfrom, rto, captured);
 
       k ^= Zobrist::psq[captured][rfrom] ^ Zobrist::psq[captured][rto];
       captured = NO_PIECE;
@@ -1593,7 +1627,8 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       // Update board and piece lists
       bool capturedPromoted = is_promoted(capsq);
       Piece unpromotedCaptured = unpromoted_piece_on(capsq);
-      remove_piece(capsq);
+      if (type_of(m) != CASTLING)
+          remove_piece(capsq);
 
       if (type_of(m) == EN_PASSANT)
           board[capsq] = NO_PIECE;
@@ -2163,8 +2198,9 @@ void Position::undo_move(Move m) {
 
   if (type_of(m) == CASTLING)
   {
+      pc = st->capturedPiece;
       Square rfrom, rto;
-      do_castling<false>(us, from, to, rfrom, rto);
+      do_castling<false>(us, from, to, rfrom, rto, pc);
   }
   else
   {
@@ -2218,15 +2254,17 @@ void Position::undo_move(Move m) {
 /// Position::do_castling() is a helper used to do/undo a castling move. This
 /// is a bit tricky in Chess960 where from/to squares can overlap.
 template<bool Do>
-void Position::do_castling(Color us, Square from, Square& to, Square& rfrom, Square& rto) {
-
-  bool kingSide = to > from;
+void Position::do_castling(Color us, Square from, Square& to, Square& rfrom, Square& rto, Piece& captured) {
+  Direction step = static_cast<Direction>(((int)to -(int)from)/distance(from, to));
   rfrom = to; // Castling is encoded as "king captures friendly rook"
-  to = make_square(kingSide ? castling_kingside_file() : castling_queenside_file(), castling_rank(us));
-  rto = to + (kingSide ? WEST : EAST);
+  to = from + 2 * step;
+  rto = to - step;
 
   Piece castlingKingPiece = piece_on(Do ? from : to);
   Piece castlingRookPiece = piece_on(Do ? rfrom : rto);
+
+  if (can_capture_by_castling())
+      captured = piece_on(to);
 
   if (Do && Eval::useNNUE)
   {
@@ -2243,9 +2281,11 @@ void Position::do_castling(Color us, Square from, Square& to, Square& rfrom, Squ
   // Remove both pieces first since squares could overlap in Chess960
   remove_piece(Do ? from : to);
   remove_piece(Do ? rfrom : rto);
-  board[Do ? from : to] = board[Do ? rfrom : rto] = NO_PIECE; // Since remove_piece doesn't do it for us
+  // board[Do ? from : to] = board[Do ? rfrom : rto] = NO_PIECE; // Since remove_piece doesn't do it for us
   put_piece(castlingKingPiece, Do ? to : from);
   put_piece(castlingRookPiece, Do ? rto : rfrom);
+  if (!Do && captured)
+      put_piece(captured, to);
 }
 
 
@@ -3081,7 +3121,7 @@ bool Position::pos_is_ok() const {
       || (count<KING>(BLACK) && piece_on(square<KING>(BLACK)) != make_piece(BLACK, KING))
       || (ep_squares() & ~var->enPassantRegion))
       assert(0 && "pos_is_ok: Default");
-
+ 
   if (Fast)
       return true;
 
