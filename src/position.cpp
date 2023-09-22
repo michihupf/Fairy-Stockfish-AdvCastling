@@ -1216,8 +1216,23 @@ bool Position::legal(Move m) const {
       // to = make_square(to > from ? castling_kingside_file() : castling_queenside_file(), castling_rank(us));
       // Direction step = to > from ? WEST : EAST;
       // the direction in which the king castles follows the formula (rfrom-kfrom)/dist(rfrom,kfrom)
+      
+      // A king cannot castle with nothing
+      if (piece_on(to) == NO_PIECE)
+          return false;
+
+      // Check if castling with allied piece when enemy pieces are disabled for castling
+      if (!castling_with_enemy_pieces() && color_of(piece_on(to)) == us)
+          return false;
+
       Direction step = static_cast<Direction>(((int)to - (int)from)/distance(from, to));
-      to = from + 2 * step;
+      to = from + castling_stepsize() * step;
+
+      // A king can never end up on the edge of the board after castling towards the edge.
+      // Making another step towards the edge after castling should always be a valid square.
+      if (!Bitboards::safe_destination(to, step))
+          return false;
+
 
       // Check if rook is an invalid castling rook piece 
       if (!(castling_rook_pieces(us) & type_of(piece_on(to_sq(m)))))
@@ -1576,7 +1591,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   st->pass = is_pass(m);
 
   assert(color_of(pc) == us);
-  assert(captured == NO_PIECE || color_of(captured) == (type_of(m) != CASTLING ? them : us));
+  assert(captured == NO_PIECE || color_of(captured) == (type_of(m) != CASTLING ? them : castling_with_enemy_pieces() ? color_of(captured) : us));
   assert(type_of(captured) != KING);
 
   if (check_counting() && givesCheck)
@@ -1588,11 +1603,11 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       assert(castling_rook_pieces(us) & type_of(captured));
       assert(castling_king_piece(us) & type_of(moved_piece(m)));
 
+      Piece rook = captured;
       Square rfrom, rto;
       do_castling<true>(us, from, to, rfrom, rto, captured);
 
-      k ^= Zobrist::psq[captured][rfrom] ^ Zobrist::psq[captured][rto];
-      captured = NO_PIECE;
+      k ^= Zobrist::psq[rook][rfrom] ^ Zobrist::psq[rook][rto];
   }
 
   if (captured)
@@ -2257,14 +2272,18 @@ template<bool Do>
 void Position::do_castling(Color us, Square from, Square& to, Square& rfrom, Square& rto, Piece& captured) {
   Direction step = static_cast<Direction>(((int)to -(int)from)/distance(from, to));
   rfrom = to; // Castling is encoded as "king captures friendly rook"
-  to = from + 2 * step;
+  to = from + castling_stepsize() * step;
   rto = to - step;
 
   Piece castlingKingPiece = piece_on(Do ? from : to);
   Piece castlingRookPiece = piece_on(Do ? rfrom : rto);
 
-  if (can_capture_by_castling())
+  // Set `captured` to captured piece instead of the rook piece when making move
+  if (Do)
       captured = piece_on(to);
+
+  if (!can_capture_by_castling())
+      assert(captured == NO_PIECE);
 
   if (Do && Eval::useNNUE)
   {
@@ -2278,12 +2297,15 @@ void Position::do_castling(Color us, Square from, Square& to, Square& rfrom, Squ
       dp.dirty_num = 2;
   }
 
+  if (Do && captured)
+      remove_piece(to);
+
   // Remove both pieces first since squares could overlap in Chess960
   remove_piece(Do ? from : to);
   remove_piece(Do ? rfrom : rto);
-  // board[Do ? from : to] = board[Do ? rfrom : rto] = NO_PIECE; // Since remove_piece doesn't do it for us
   put_piece(castlingKingPiece, Do ? to : from);
   put_piece(castlingRookPiece, Do ? rto : rfrom);
+
   if (!Do && captured)
       put_piece(captured, to);
 }

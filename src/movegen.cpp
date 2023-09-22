@@ -43,12 +43,10 @@ namespace {
                 if (pos.piece_on(rsq))
                   break;
             }
-            if (rsq != to) {
-              Square rto = to - step;
-              if (!rto) // check if the square is empty
+            Square rto = to - step;
+            if (!rto) // check if the square is empty
                 b ^= square_bb(rsq) ^ to ^ rto;
-              to = rsq;
-            }
+            to = rsq;
         }
         if (T == EN_PASSANT)
             b ^= pos.capture_square(to);
@@ -72,9 +70,7 @@ namespace {
             if (pos.piece_on(rsq))
               break;
         }
-        if (rsq != to) {
-          to = rsq;
-        }
+        to = rsq;
     }
 
     *moveList++ = make<T>(from, to, pt);
@@ -436,7 +432,7 @@ namespace {
                 Square from = pop_lsb(initiators);
                 Bitboard possible_moves = pos.moves_from(Us, META_CASTLING, from);
                 while (possible_moves)
-                moveList = make_move_and_gating<CASTLING>(pos, moveList, Us, from, pop_lsb(possible_moves));
+                    moveList = make_move_and_gating<CASTLING>(pos, moveList, Us, from, pop_lsb(possible_moves));
             }
                        
         }
