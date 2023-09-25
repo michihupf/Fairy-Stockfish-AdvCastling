@@ -1578,7 +1578,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
   Color us = sideToMove;
   Color them = ~us;
   Square from = from_sq(m);
-  Square to = to_sq(m);
+  Square to = to_sq(m), rto, rfrom;
   Piece pc = moved_piece(m);
   Piece captured = piece_on(type_of(m) == EN_PASSANT ? capture_square(to) : to);
   if (to == from)
@@ -1604,10 +1604,16 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       assert(castling_king_piece(us) & type_of(moved_piece(m)));
 
       Piece rook = captured;
-      Square rfrom, rto;
       do_castling<true>(us, from, to, rfrom, rto, captured);
 
       k ^= Zobrist::psq[rook][rfrom] ^ Zobrist::psq[rook][rto];
+
+      // when castling with a pawn reset rule 50 and update pawn key
+      if (type_of(rook) == PAWN) {
+          st->rule50 = 0;
+      }
+      // set pc to the rook piece to do some extra pawn stuff later it it was moved
+      pc = rook;
   }
 
   if (captured)
@@ -1807,6 +1813,11 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       move_piece(from, to);
   }
 
+  if (type_of(m) == CASTLING) {
+      to = rto;
+      from = rfrom;
+  }
+
   // If the moving piece is a pawn do some special extra work
   if (type_of(pc) == PAWN)
   {
@@ -1856,6 +1867,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
               k ^= Zobrist::enpassant[file_of(to)];
           }
           if (   std::abs(int(to) - int(from)) == 3 * NORTH
+              && Bitboards::safe_destination(to, -2 * pawn_push(us))
               && (var->enPassantRegion & (to - 2 * pawn_push(us)))
               && ((pawn_attacks_bb(us, to - 2 * pawn_push(us)) & pieces(them, PAWN)) || var->enPassantTypes[them] & ~piece_set(PAWN))
               && !(wall_gating() && gating_square(m) == to - 2 * pawn_push(us)))

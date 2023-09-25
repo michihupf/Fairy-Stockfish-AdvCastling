@@ -1019,10 +1019,6 @@ namespace {
     {
         Square s = pop_lsb(b);
 
-        if ((pos.pieces(Them, PAWN) & forward_file_bb(Us, s + Up))) {
-            std::cout << Bitboards::pretty(pos.pieces(Them, PAWN)) << std::endl;
-            std::cout << Bitboards::pretty(forward_file_bb(Us, s + Up)) << std::endl;
-        }
         assert(!(pos.pieces(Them, PAWN) & forward_file_bb(Us, s + Up)));
 
         int r = std::max(RANK_8 - std::max(relative_rank(Us, pos.promotion_square(Us, s), pos.max_rank()) - relative_rank(Us, s, pos.max_rank()), 0), 0);
